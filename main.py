@@ -1,14 +1,16 @@
 import os
 import argparse
+import cv2
 from image_retriever import store_image
 from mask_selector import process_image
 from filter_processor import process_remaining_content, process_mask_content
 from image_merger import merge_images
+from upscale import upscale_image
 '''
 main.py
 
 This script is the primary driver code for the RCNN Image Enhancement project. In this file,
-you will find two primary elements of interest:
+you will find three primary elements of interest:
 
 1 - get_processing_intensity()
 
@@ -89,8 +91,44 @@ def get_processing_intensity():
 
     return intensity_map[choice]
 
+
 '''
-2 - Main function
+2 - process_upscaling()
+
+    When the final image containing mask/remainder content has been merged, the user has the option to upscale the image
+    using the FSRCNN model.
+'''
+def process_upscaling(final_image_path):
+    scale_factor = input("Do you want to upscale the image? (y/n): ").strip().lower()
+    if scale_factor == "n":
+        print("Skipping upscaling.")
+        return final_image_path
+
+    try:
+        scale_factor = 3 #sets the scaling factor for x3 model
+
+        #the merged image in read into the image var
+        image = cv2.imread(final_image_path)
+        if image is None:
+            raise FileNotFoundError(f"Error: could not load image from path: {final_image_path}. Check the path!")
+
+      
+      
+        print(f"Applying super-resolution with a scale factor of {scale_factor}.")
+        upscaled_image = upscale_image(image, scale_factor)
+
+        upscaled_path = final_image_path.replace(".jpg", f"_upscaled_{scale_factor}.jpg")
+        print("Saving upscaled image...")
+        cv2.imwrite(upscaled_path, upscaled_image)
+        print(f"Upscaled image saved at: {upscaled_path}")
+        return upscaled_path
+
+    except Exception as e:
+        print(f"Error during upscaling: {e}")
+        return final_image_path
+
+'''
+3 - Main function
     This function drives the program, and is the script which is initially called.
 
     I have added comments throughout this function to provide more context on the workflow.
@@ -159,6 +197,9 @@ def main():
         final_image = merge_images(filtered_mask_content_path, filtered_remaining_content_path, final_image_path)
         
         print(f"Final image saved at: {final_image_path}")
+
+        final_image_path = process_upscaling(final_image_path)
+
 
     except Exception as e:
         print(f"Error: {e}")
