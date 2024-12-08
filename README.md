@@ -23,3 +23,5 @@ This program ships with an example image, so you can immediately get started by 
 - Upon program completion, the modified image will appear in the \final_output directory.
 
 ## Demo
+Here is a demonstration of the program in action: 
+[Video Demo](rcnndemo.mp4)
